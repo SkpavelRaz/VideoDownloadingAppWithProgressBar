@@ -1,5 +1,8 @@
 package com.example.videodownloadapp
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.DialogInterface
@@ -17,20 +20,24 @@ import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.snackbar.Snackbar
 
 class MainActivity : AppCompatActivity() {
-
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             if (intent?.action == "DOWNLOAD_PROGRESS") {
                 val progress = intent.getIntExtra("progress", 0)
-                val massage=intent.getStringExtra("toast")
-                progressShow.progress=progress
-                tvRatio.text="$progress%"
-                Toast.makeText(this@MainActivity,massage,Toast.LENGTH_SHORT).show()
+                val massage = intent.getStringExtra("toast")
+                progressShow.progress = progress
+                tvRatio.text = "$progress%"
+                if (!massage.isNullOrEmpty()){
+                    Toast.makeText(this@MainActivity, massage, Toast.LENGTH_SHORT).show()
+                }
+
             }
         }
     }
@@ -53,7 +60,6 @@ class MainActivity : AppCompatActivity() {
 
         val rootView = findViewById<View>(R.id.main)
 
-
         progressShow = findViewById(R.id.progress_show)
         tvRatio = findViewById(R.id.tv_progress_ratio)
         findViewById<Button>(R.id.btn_download).setOnClickListener {
@@ -61,6 +67,7 @@ class MainActivity : AppCompatActivity() {
                 startOperation()
             }
         }
+
 
         val filter = IntentFilter()
         filter.addAction("DOWNLOAD_PROGRESS")
@@ -76,6 +83,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    //start download operation
     private fun startOperation() {
         if (isConnected(this)) {
             if (snackBar.isShown) {
@@ -83,12 +91,12 @@ class MainActivity : AppCompatActivity() {
             }
             val intent = Intent(this, DownloadService::class.java)
             startService(intent)
-
         } else {
             snackBar.show()
         }
     }
 
+    //on app kill state
     override fun onDestroy() {
         super.onDestroy()
         LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
